@@ -46,10 +46,7 @@ export const main =
             const bountyFunction = (a) => (a % 69);
 
             Funder.only(() => {
-                // const { amt, deadline } = declassify(interact.getBounty());
-                const amt = 10;
-                const deadline = 8;
-                assume(amt > 0);
+                const { amt, deadline } = declassify(interact.getBounty());
             });
             //TODO: the deadline expression of a timeout clause can be any equation over consensus state. https://docs.reach.sh/guide-timeout.html 
             Funder.publish(amt, deadline)
@@ -70,25 +67,28 @@ export const main =
                     .while(keepGoing)
                     .case(
                         Contestant,
-                        (() => ({
-                            // value = declassify(interact.submitValue(ticketPrice));
-                            // return {
-                            //TODO: BIG HACKY MOVE: for some reason i can't seem to "return" an object with some logic without errors 
-                            when: declassify(isSome(interact.submitValue())),
-                            msg: declassify(interact.submitValue())
-                            // }
-                            // if (isSome(value)) {
-                            //     return {
-                            //         when: true,
-                            //         msg: value
-                            //     }
-                            // }
-                            // else {
-                            //     return {
-                            //         when: false
-                            //     }
-                            // }
-                        })),
+                        (() => {
+                            const value = declassify(interact.submitValue());
+                            return {
+                                // value = declassify(interact.submitValue(ticketPrice));
+                                // return {
+
+                                when: isSome(value),
+                                msg: value
+                                // }
+                                // if (isSome(value)) {
+                                //     return {
+                                //         when: true,
+                                //         msg: value
+                                //     }
+                                // }
+                                // else {
+                                //     return {
+                                //         when: false
+                                //     }
+                                // }
+                            }
+                        }),
                         // ((_) => 0),
                         ((msg) => {
                             const currentContestant = this;
@@ -112,7 +112,8 @@ export const main =
                             //     }
                             // }
                             return [true, newWinner];
-                        }))
+                        })
+                    )
                     .timeout(deadline, () => {
                         Anybody.publish();
                         return [false, currentWinner];
@@ -121,7 +122,7 @@ export const main =
 
             // commit();
 
-            transfer(amt).to(currentWinner.account);
+            transfer(balance()).to(currentWinner.account);
             commit();
 
             exit();

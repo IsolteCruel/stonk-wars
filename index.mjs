@@ -1,7 +1,7 @@
 import { loadStdlib } from '@reach-sh/stdlib';
 import * as backend from './build/index.main.mjs';
 
-const numOfBuyers = 2;
+const numOfBuyers = 4;
 
 (async () => {
     const stdlib = await loadStdlib();
@@ -19,24 +19,27 @@ const numOfBuyers = 2;
 
     const funderParams = {
         amt: stdlib.parseCurrency(20),
-        deadline: 8,
+        deadline: 24,
     };
 
     // const ctcIsolte = accIsolte.attach(backend, ctcFunder.getInfo());
     // const ctcRudeus = accRudeus.attach(backend, ctcFunder.getInfo());
-    const Common = {
-        informBounty: (bountyAmt) => {
-            console.log(`${Who} saw a bounty of ${bountyAmt}`);
-        },
-        // informLeaderboard: (leaderboard) => {
-        //     console.log(`${Who} saw the leaderboard as ${leaderboard}`)
-        // },
-    };
+    // const Common = {
+    //     informBounty: (bountyAmt) => {
+    //         console.log(`${Who} saw a bounty of ${bountyAmt}`);
+    //     },
+    //     // informLeaderboard: (leaderboard) => {
+    //     //     console.log(`${Who} saw the leaderboard as ${leaderboard}`)
+    //     // },
+    // };
 
     const Funder = (Who) => ({
-        ...Common,
+        // ...Common,
         getBounty: () => {
             return funderParams;
+        },
+        informBounty: (bountyAmt) => {
+            console.log(`${Who} saw a bounty of ${bountyAmt}`);
         },
         // bounty: (input) => {
         //     return input % 69;
@@ -49,6 +52,33 @@ const numOfBuyers = 2;
     //         return amt;
     //     },
     // });
+    const Contestant = (i) => ({
+        // Who: `Contestant ${i}`,
+        // ...Common,
+        submitValue: () => {
+            if (Math.random() < -0.1) {
+                const value = Math.floor(Math.random() * 30);
+                console.log(`Contestant ${i} submitted ${value}`);
+                return ['Some', value];
+            }
+            else {
+                console.log('o no')
+                return ['None', null];
+            }
+            // return null;
+        },
+        informWinner: (winner) => {
+            if (stdlib.addressEq(winner, accBuyer)) {
+                console.log(`Contestant ${i} won!`);
+            }
+        },
+        informBounty: (bountyAmt) => {
+            console.log(`Contestant ${i} saw a bounty of ${bountyAmt}`);
+        }
+        // shouldSubmitValue: () => {
+        //     return Math.random() < 0.1;
+        // }
+    })
 
     await Promise.all([
         backend.Funder(
@@ -57,26 +87,8 @@ const numOfBuyers = 2;
         ),
         accBuyerArray.map((accBuyer, i) => {
             const ctcBuyer = accBuyer.attach(backend, ctcInfo);
-            const Who = `Contestant #${i}`;
-            return backend.Contestant(ctcBuyer, {
-                ...Common,
-                submitValue: () => {
-                    if (Math.random() < 0.1) {
-                        value = Math.floor(Math.random() * 30);
-                        console.log(`${Who} submitted ${value}`);
-                        return value;
-                    }
-                    return null;
-                },
-                informWinner: (winner) => {
-                    if (stdlib.addressEq(winner, accBuyer)) {
-                        console.log(`${Who} won!`);
-                    }
-                },
-                // shouldSubmitValue: () => {
-                //     return Math.random() < 0.1;
-                // }
-            });
+            // const Who = `Contestant #${i}`;
+            return backend.Contestant(ctcBuyer, Contestant(i));
         })
     ]);
 
