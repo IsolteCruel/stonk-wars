@@ -7,8 +7,11 @@ const numOfBuyers = 4;
     const stdlib = await loadStdlib();
     const startingBalance = stdlib.parseCurrency(100);
 
+    const fmt = (x) => stdlib.formatCurrency(x, 4);
+    const getBalance = async (who) => fmt(await stdlib.balanceOf(who));
+
     const accFunder = await stdlib.newTestAccount(startingBalance);
-    const accBuyerArray = await Promise.all(
+    const accContestantArray = await Promise.all(
         Array.from({ length: numOfBuyers }, () =>
             stdlib.newTestAccount(startingBalance)
         )
@@ -19,7 +22,7 @@ const numOfBuyers = 4;
 
     const funderParams = {
         amt: stdlib.parseCurrency(20),
-        deadline: 24,
+        deadline: 3,
     };
 
     // const ctcIsolte = accIsolte.attach(backend, ctcFunder.getInfo());
@@ -38,8 +41,8 @@ const numOfBuyers = 4;
         getBounty: () => {
             return funderParams;
         },
-        informBounty: (bountyAmt) => {
-            console.log(`${Who} saw a bounty of ${bountyAmt}`);
+        informBounty: (bountyAmt, deadline) => {
+            console.log(`${Who} saw a bounty of ${bountyAmt} and deadline ${deadline}`);
         },
         // bounty: (input) => {
         //     return input % 69;
@@ -56,13 +59,13 @@ const numOfBuyers = 4;
         // Who: `Contestant ${i}`,
         // ...Common,
         submitValue: () => {
-            if (Math.random() < -0.1) {
+            if (i == 0) {
                 const value = Math.floor(Math.random() * 30);
                 console.log(`Contestant ${i} submitted ${value}`);
                 return ['Some', value];
             }
             else {
-                console.log('o no')
+                console.log(`Contestant ${i} o no`)
                 return ['None', null];
             }
             // return null;
@@ -72,8 +75,8 @@ const numOfBuyers = 4;
                 console.log(`Contestant ${i} won!`);
             }
         },
-        informBounty: (bountyAmt) => {
-            console.log(`Contestant ${i} saw a bounty of ${bountyAmt}`);
+        informBounty: (bountyAmt, deadline) => {
+            console.log(`Contestant ${i} saw a bounty of ${bountyAmt} and deadline ${deadline}`);
         }
         // shouldSubmitValue: () => {
         //     return Math.random() < 0.1;
@@ -85,12 +88,17 @@ const numOfBuyers = 4;
             ctcFunder,
             Funder('GuputaSan'),
         ),
-        accBuyerArray.map((accBuyer, i) => {
-            const ctcBuyer = accBuyer.attach(backend, ctcInfo);
+        accContestantArray.map((accContestant, i) => {
+            const ctcContestant = accContestant.attach(backend, ctcInfo);
             // const Who = `Contestant #${i}`;
-            return backend.Contestant(ctcBuyer, Contestant(i));
+            return backend.Contestant(ctcContestant, Contestant(i));
         })
     ]);
+
+    for (let i = 0; i < accContestantArray.length; i++) {
+        const afterBalance = await getBalance(accContestantArray[i]);
+        console.log(`Contestant ${i} went to ${afterBalance}.`);
+    }
 
     // const afterIsolte = await getBalance(accIsolte);
     // const afterRudeus = await getBalance(accRudeus);

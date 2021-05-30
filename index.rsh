@@ -8,7 +8,7 @@ const UserEntryType = Object({
 
 const CommonInterface =
 {
-    informBounty: Fun([UInt], Null),
+    informBounty: Fun([UInt, UInt], Null),
     //TODO: check how to send leaderboard, perhaps maintain top X in an array
     //TODO: looks like map doesn't work kek
     // informLeaderboard: Fun([Map(Object({
@@ -54,7 +54,7 @@ export const main =
             // commit();
 
             each([Contestant], () => {
-                interact.informBounty(amt);
+                interact.informBounty(amt, deadline);
             });
 
             const initLeaderboard = new Map(UserEntryType);
@@ -63,7 +63,7 @@ export const main =
             const [keepGoing, currentWinner] =
                 //TODO: timestamp is currently ignored kek
                 parallelReduce([true, { account: Funder, returnedValue: 0, timestamp: 0 }])
-                    .invariant(true)
+                    .invariant(balance() == amt)
                     .while(keepGoing)
                     .case(
                         Contestant,
