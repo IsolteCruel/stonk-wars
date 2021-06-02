@@ -44,6 +44,12 @@ const numOfBuyers = 4;
         informBounty: (bountyAmt, deadline) => {
             console.log(`${Who} saw a bounty of ${bountyAmt} and deadline ${deadline}`);
         },
+        informLeaderboard: (leaderboard) => {
+            leaderboard.forEach((element,i) => {
+                console.log(`${i}: ${element.accountAddress} ${element.returnedValue} ${element.inputValue} ${element.timestamp}`);
+            })
+            
+        }
         // bounty: (input) => {
         //     return input % 69;
         // },
@@ -59,7 +65,8 @@ const numOfBuyers = 4;
         // Who: `Contestant ${i}`,
         // ...Common,
         submitValue: () => {
-            if (i == 0) {
+            // if (i == 0) {
+            if (Math.random() < 0.5) {
                 const value = Math.floor(Math.random() * 30);
                 console.log(`Contestant ${i} submitted ${value}`);
                 return ['Some', value];
