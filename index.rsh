@@ -160,26 +160,26 @@ export const main =
                             //     : (elem.returnValue < newEntry.returnValue ?
                             //         [true, (idx + 1 < newArr.length ? idx + 1 : idx), newArr.set(idx, newEntry)]
                             //         : [false, (idx + 1 < newArr.length ? idx + 1 : idx), newArr])
-
-                            const [_, _, newLeaderboard] = leaderboard.reduce([false, 0, leaderboard], ([found, idx, newArr], elem) => {
-                                if (found) {
-                                    if (idx + 1 < newArr.length) {
-                                        return [found, idx + 1, newArr.set(idx + 1, elem)];
-                                    } else {
-                                        return [found, idx, newArr];
-                                    }
-                                } else {
-                                    if (elem.returnValue < newEntry.returnValue) {
-                                        if (idx + 1 < newArr.length) {
-                                            return [true, idx + 1, newArr.set(idx, newEntry)];
-                                        } else {
-                                            return [false, idx, newArr];
-                                        }
-                                    } else {
-                                        return [false, idx + 1, newArr];
-                                    }
-                                }
-                            })
+                            const newLeaderboard = leaderboard;
+                            // const [_, _, newLeaderboard] = leaderboard.reduce([false, 0, leaderboard], ([found, idx, newArr], elem) => {
+                            //     if (found) {
+                            //         if (idx + 1 < newArr.length) {
+                            //             return [found, idx + 1, newArr.set(idx + 1, elem)];
+                            //         } else {
+                            //             return [found, idx, newArr];
+                            //         }
+                            //     } else {
+                            //         if (elem.returnValue < newEntry.returnValue) {
+                            //             if (idx + 1 < newArr.length) {
+                            //                 return [true, idx + 1, newArr.set(idx, newEntry)];
+                            //             } else {
+                            //                 return [false, idx, newArr];
+                            //             }
+                            //         } else {
+                            //             return [false, idx + 1, newArr];
+                            //         }
+                            //     }
+                            // })
                             // if (foundIndex != -1) {
                             //     leaderboard[foundIndex] = newEntry;
                             // }
