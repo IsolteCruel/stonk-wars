@@ -1,5 +1,4 @@
 'reach 0.1';
-'use strict';
 
 const UserEntryType = Object({
     accountAddress: Address,
@@ -8,7 +7,7 @@ const UserEntryType = Object({
     timestamp: UInt
 });
 
-const LEADERBOARD_SIZE = 1;
+const LEADERBOARD_SIZE = 3;
 
 const CommonInterface =
 {
@@ -177,7 +176,7 @@ export const main =
                                             return [false, idx, newArr];
                                         }
                                     } else {
-                                        return [false, idx, newArr];
+                                        return [false, idx + 1, newArr];
                                     }
                                 }
                             })

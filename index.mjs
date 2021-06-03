@@ -46,7 +46,7 @@ const numOfBuyers = 4;
         },
         informLeaderboard: (leaderboard) => {
             leaderboard.forEach((element,i) => {
-                console.log(`${i}: ${element.accountAddress} ${element.returnedValue} ${element.inputValue} ${element.timestamp}`);
+                console.log(`${i}: ${element.accountAddress} ${element.returnValue} ${element.inputValue} ${element.timestamp}`);
             })
             
         }
