@@ -13,7 +13,6 @@ const LEADERBOARD_SIZE = 3;
 const CommonInterface =
 {
     informBounty: Fun([UInt, UInt], Null),
-    ping: Fun([Array(UserEntryType, LEADERBOARD_SIZE)], Null)
 }
 
 const FunderInterface =
@@ -35,7 +34,7 @@ const ContestantInterface =
     ...CommonInterface,
     submitValue: Fun([], Maybe(UInt)),
     informWinner: Fun([Address], Null),
-    informSucc: Fun([Bool], Null)
+    informSuccess: Fun([Bool], Null)
 }
 
 export const main =
@@ -78,7 +77,7 @@ export const main =
                         }),
                         ((msg) => {
                             const currentContestant = this;
-                            Contestant.only(() => interact.informSucc(true))
+                            Contestant.only(() => interact.informSuccess(true))
                             const inputValue = fromSome(msg, 0);
                             const evaluatedValue = bountyFunction(inputValue);
                             const newEntry = {
@@ -89,7 +88,6 @@ export const main =
 
                             const [isChanged, _, newLeaderboard] = leaderboard.reduce([false, 0, leaderboard], ([found, idx, newArr], elem) => {
                                 if (found) {
-                                    Contestant.only(() => interact.ping(leaderboard))
                                     if (idx + 1 < newArr.length) {
                                         return [found, idx + 1, newArr.set(idx + 1, elem)];
                                     } else {

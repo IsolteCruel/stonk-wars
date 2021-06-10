@@ -88,7 +88,7 @@ const numOfBuyers = 4;
         informBounty: (bountyAmt, deadline) => {
             console.log(`Contestant ${i} saw a bounty of ${bountyAmt} and deadline ${deadline}`);
         },
-        informSucc: async (status) => {
+        informSuccess: async (status) => {
             console.log(`Contestant ${i} saw status: ${status}`);
             const leaderboard = await ctc.getViews().Leaderboard.leaderboard();
             if (leaderboard[0] === 'Some') {
