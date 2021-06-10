@@ -22,7 +22,7 @@ const numOfBuyers = 4;
 
     const funderParams = {
         amt: stdlib.parseCurrency(20),
-        deadline: 3,
+        deadline: 50,
     };
 
     // const ctcIsolte = accIsolte.attach(backend, ctcFunder.getInfo());
@@ -45,10 +45,13 @@ const numOfBuyers = 4;
             console.log(`${Who} saw a bounty of ${bountyAmt} and deadline ${deadline}`);
         },
         informLeaderboard: (leaderboard) => {
-            leaderboard.forEach((element,i) => {
+            leaderboard.forEach((element, i) => {
                 console.log(`${i}: ${element.accountAddress} ${element.returnValue} ${element.inputValue} ${element.timestamp}`);
-            })
-            
+            });
+        },
+
+        informSubmission: (address, inputValue, evaluatedValue) => {
+            console.log(`Funder saw submission of ${inputValue} evaluated to ${evaluatedValue} by ${address}`);
         }
         // bounty: (input) => {
         //     return input % 69;
@@ -61,7 +64,7 @@ const numOfBuyers = 4;
     //         return amt;
     //     },
     // });
-    const Contestant = (i) => ({
+    const Contestant = (i, ctc) => ({
         // Who: `Contestant ${i}`,
         // ...Common,
         submitValue: () => {
@@ -84,6 +87,24 @@ const numOfBuyers = 4;
         },
         informBounty: (bountyAmt, deadline) => {
             console.log(`Contestant ${i} saw a bounty of ${bountyAmt} and deadline ${deadline}`);
+        },
+        informSucc: async (status) => {
+            console.log(`Contestant ${i} saw status: ${status}`);
+            const leaderboard = await ctc.getViews().Leaderboard.leaderboard();
+            if (leaderboard[0] === 'Some') {
+                leaderboard[1].forEach((element, i) => {
+                    console.log(`${i}: ${element.accountAddress} ${element.returnValue} ${element.inputValue} ${element.timestamp}`);
+                });
+            }
+            else {
+                console.log(`undefined leaderboard`);
+            }
+        },
+        informSubmission: (address, inputValue, evaluatedValue) => {
+            console.log(`Funder saw submission of ${inputValue} evaluated to ${evaluatedValue} by ${address}`);
+        },
+        ping: (x) => {
+            console.log(`PING ${JSON.stringify(x)}`);
         }
         // shouldSubmitValue: () => {
         //     return Math.random() < 0.1;
@@ -98,8 +119,16 @@ const numOfBuyers = 4;
         accContestantArray.map((accContestant, i) => {
             const ctcContestant = accContestant.attach(backend, ctcInfo);
             // const Who = `Contestant #${i}`;
-            return backend.Contestant(ctcContestant, Contestant(i));
+            return backend.Contestant(ctcContestant, Contestant(i, ctcContestant));
         })
+        // backend.LeaderboardView(
+        //     ctcFunder,
+        //     {
+        //         informSubmission: (address, inputValue, evaluatedValue) => {
+        //             console.log(`Funder saw submission of ${inputValue} evaluated to ${evaluatedValue} by ${address}`);
+        //         }
+        //     }
+        // )
     ]);
 
     for (let i = 0; i < accContestantArray.length; i++) {

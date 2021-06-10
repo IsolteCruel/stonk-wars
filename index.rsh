@@ -1,5 +1,7 @@
 'reach 0.1';
 
+import { bountyFunction } from 'bountyFunction.rsh';
+
 const UserEntryType = Object({
     accountAddress: Address,
     returnValue: UInt,
@@ -14,7 +16,8 @@ const CommonInterface =
     informBounty: Fun([UInt, UInt], Null),
     //TODO: check how to send leaderboard, perhaps maintain top X in an array
     //TODO: looks like map doesn't work kek
-    informLeaderboard: Fun([Array(UserEntryType, LEADERBOARD_SIZE)], Null)
+    // informLeaderboard: Fun([Array(UserEntryType, LEADERBOARD_SIZE)], Null),
+    ping: Fun([Array(UserEntryType, LEADERBOARD_SIZE)], Null)
 }
 
 const FunderInterface =
@@ -27,21 +30,28 @@ const FunderInterface =
     // bounty: Fun([UInt], UInt)
 }
 
+const LeaderboardViewInterface =
+{
+    // informSubmission: Fun([Address, UInt, UInt], Null)
+    leaderboard: Array(UserEntryType, LEADERBOARD_SIZE)
+}
+
 const ContestantInterface =
 {
     ...CommonInterface,
     submitValue: Fun([], Maybe(UInt)),
     // shouldSubmitValue: Fun([], Bool),
-    informWinner: Fun([Address], Null)
+    informWinner: Fun([Address], Null),
+    informSucc: Fun([Bool], Null)
 }
 
 export const main =
     Reach.App(
         {},
-        [Participant('Funder', FunderInterface), ParticipantClass('Contestant', ContestantInterface)],
-        (Funder, Contestant) => {
+        [Participant('Funder', FunderInterface), ParticipantClass('Contestant', ContestantInterface), View('Leaderboard', LeaderboardViewInterface)],
+        (Funder, Contestant, LeaderboardView) => {
 
-            const bountyFunction = (a) => (a % 69);
+            // const bountyFunction = (a) => (a % 69);
 
             Funder.only(() => {
                 const { amt, deadline } = declassify(interact.getBounty());
@@ -55,13 +65,21 @@ export const main =
                 interact.informBounty(amt, deadline);
             });
 
-            // const initLeaderboard = new Map(UserEntryType);
+            // // const initLeaderboard = new Map(UserEntryType);
+            // LeaderboardView.leaderboard.set(Array.replicate(LEADERBOARD_SIZE, {
+            //     accountAddress: Funder,
+            //     returnValue: 0,
+            //     inputValue: 0,
+            //     timestamp: 0
+            // }));
+
             const initLeaderboard = Array.replicate(LEADERBOARD_SIZE, {
                 accountAddress: Funder,
                 returnValue: 0,
                 inputValue: 0,
                 timestamp: 0
             });
+            LeaderboardView.leaderboard.set(initLeaderboard);
             // commit();
 
             const [keepGoing, currentWinner, leaderboard] =
@@ -96,9 +114,14 @@ export const main =
                         // ((_) => 0),
                         ((msg) => {
                             const currentContestant = this;
+                            Contestant.only(() => interact.informSucc(true))
                             // const value 
                             const inputValue = fromSome(msg, 0);
                             const evaluatedValue = bountyFunction(inputValue);
+                            // each([Funder, Contestant], () => {
+                            //     interact.informSubmission(currentContestant, inputValue, evaluatedValue);
+                            // })
+                            // LeaderboardView.informSubmission(currentContestant, inputValue, evaluatedValue);
                             // previousEntry = leaderboard[currentContestant];
                             // if (isSome(previousEntry)) {
                             //     if (evaluatedValue > previousEntry.returnValue) {
@@ -160,26 +183,32 @@ export const main =
                             //     : (elem.returnValue < newEntry.returnValue ?
                             //         [true, (idx + 1 < newArr.length ? idx + 1 : idx), newArr.set(idx, newEntry)]
                             //         : [false, (idx + 1 < newArr.length ? idx + 1 : idx), newArr])
-                            const newLeaderboard = leaderboard;
-                            // const [_, _, newLeaderboard] = leaderboard.reduce([false, 0, leaderboard], ([found, idx, newArr], elem) => {
-                            //     if (found) {
-                            //         if (idx + 1 < newArr.length) {
-                            //             return [found, idx + 1, newArr.set(idx + 1, elem)];
-                            //         } else {
-                            //             return [found, idx, newArr];
-                            //         }
-                            //     } else {
-                            //         if (elem.returnValue < newEntry.returnValue) {
-                            //             if (idx + 1 < newArr.length) {
-                            //                 return [true, idx + 1, newArr.set(idx, newEntry)];
-                            //             } else {
-                            //                 return [false, idx, newArr];
-                            //             }
-                            //         } else {
-                            //             return [false, idx + 1, newArr];
-                            //         }
-                            //     }
-                            // })
+                            // const newLeaderboard = leaderboard;
+                            const [isChanged, _, newLeaderboard] = leaderboard.reduce([false, 0, leaderboard], ([found, idx, newArr], elem) => {
+                                if (found) {
+                                    Contestant.only(() => interact.ping(leaderboard))
+                                    if (idx + 1 < newArr.length) {
+                                        return [found, idx + 1, newArr.set(idx + 1, elem)];
+                                    } else {
+                                        return [found, idx, newArr];
+                                    }
+                                } else {
+                                    if (elem.returnValue < newEntry.returnValue) {
+                                        if (idx + 1 < newArr.length) {
+                                            return [true, idx + 1, newArr.set(idx, newEntry)];
+                                        } else {
+                                            return [true, idx, newArr];
+                                        }
+                                    } else {
+                                        return [false, idx + 1, newArr];
+                                    }
+                                }
+                            })
+                            // if (isChanged) {
+                            LeaderboardView.leaderboard.set(newLeaderboard);
+                            commit();
+                            Contestant.publish();
+                            // }
                             // if (foundIndex != -1) {
                             //     leaderboard[foundIndex] = newEntry;
                             // }
@@ -199,9 +228,9 @@ export const main =
 
             // commit();
 
-            Funder.only(() => {
-                interact.informLeaderboard(leaderboard);
-            });
+            // Funder.only(() => {
+            //     interact.informLeaderboard(leaderboard);
+            // });
 
             transfer(balance()).to(currentWinner.accountAddress);
             commit();
