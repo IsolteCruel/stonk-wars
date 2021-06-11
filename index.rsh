@@ -119,7 +119,7 @@ export const main =
                             //     Contestant.publish();
                             // }
                             const newWinner = evaluatedValue > currentWinner.returnValue ? newEntry : currentWinner;
-                            Contestant.only(() => interact.informSuccess(true))
+                            Contestant.only(() => interact.informSuccess(isSome(msg)));
                             return [true, newWinner];
                         })
                     )
