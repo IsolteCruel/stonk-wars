@@ -12,15 +12,6 @@ const FunderInterface =
     postWager: Fun([], Null)
 }
 
-// interact interface for an observer Participant
-// whose work is to observe successful submissions
-// and report them to all Web frontends so this 
-// data can be used to form a leaderboard
-const MonitorInterface =
-{
-    seeSubmission: Fun([Address, UInt, UInt], Null)
-}
-
 // interact interface for Contestant participating
 // in the contest
 const ContestantInterface =
@@ -29,6 +20,15 @@ const ContestantInterface =
     submitValue: Fun([], Maybe(UInt)),
     informWinner: Fun([Address], Null),
     informSuccess: Fun([Bool, Address], Null)
+}
+
+// interact interface for an observer Participant
+// whose work is to observe successful submissions
+// and report them to all Web frontends so this 
+// data can be used to form a leaderboard
+const MonitorInterface =
+{
+    seeSubmission: Fun([Address, UInt, UInt], Null)
 }
 
 export const main =
