@@ -10,6 +10,9 @@ const numOfBuyers = 4;
     const fmt = (x) => stdlib.formatCurrency(x, 4);
     const getBalance = async (who) => fmt(await stdlib.balanceOf(who));
 
+    // Make dummy accounts for Funder, Contestants
+    // and 1 Monitor(since Monitor doesn't really
+    // have much use in console environment)
     const accFunder = await stdlib.newTestAccount(startingBalance);
     const accContestantArray = await Promise.all(
         Array.from({ length: numOfBuyers }, () =>
@@ -22,59 +25,28 @@ const numOfBuyers = 4;
     const ctcInfo = ctcFunder.getInfo();
     const ctcMonitor = accMonitor.attach(backend, ctcInfo);
 
+    // Test funder parameters
     const funderParams = {
         amt: stdlib.parseCurrency(20),
         deadline: 50,
     };
 
-    // const ctcIsolte = accIsolte.attach(backend, ctcFunder.getInfo());
-    // const ctcRudeus = accRudeus.attach(backend, ctcFunder.getInfo());
-    // const Common = {
-    //     informBounty: (bountyAmt) => {
-    //         console.log(`${Who} saw a bounty of ${bountyAmt}`);
-    //     },
-    //     // informLeaderboard: (leaderboard) => {
-    //     //     console.log(`${Who} saw the leaderboard as ${leaderboard}`)
-    //     // },
-    // };
-
+    // define Funder interact functions
     const Funder = (Who) => ({
-        // ...Common,
         getBounty: () => {
             return funderParams;
-        },
-        informBounty: (bountyAmt, deadline) => {
-            console.log(`${Who} saw a bounty of ${bountyAmt} and deadline ${deadline}`);
-        },
-        informLeaderboard: (leaderboard) => {
-            leaderboard.forEach((element, i) => {
-                console.log(`${i}: ${element.accountAddress} ${element.returnValue} ${element.inputValue} ${element.timestamp}`);
-            });
-        },
-
-        informSubmission: (address, inputValue, evaluatedValue) => {
-            console.log(`Funder saw submission of ${inputValue} evaluated to ${evaluatedValue} by ${address}`);
         },
         postWager: () => {
             console.log("Post Wager");
         }
-        // bounty: (input) => {
-        //     return input % 69;
-        // },
     });
 
-    // const Contestant = (Who, amt) => ({
-    //     ...Common,
-    //     submitValue: () => {
-    //         return amt;
-    //     },
-    // });
+    // define Contestant interact functions
     const Contestant = (i, ctc) => ({
-        // Who: `Contestant ${i}`,
-        // ...Common,
+        isSubmissionPolled: false,
         submitValue: () => {
-            // if (i == 0) {
-            if (Math.random() < 0.5) {
+            if (isSubmissionPolled || Math.random() < 0.5) {
+                isSubmissionPolled = true
                 const value = Math.floor(Math.random() * 30);
                 console.log(`Contestant ${i} submitted ${value}`);
                 return ['Some', value];
@@ -83,7 +55,6 @@ const numOfBuyers = 4;
                 console.log(`Contestant ${i} o no`)
                 return ['None', null];
             }
-            // return null;
         },
         informWinner: (winner) => {
             if (stdlib.addressEq(winner, accBuyer)) {
@@ -95,27 +66,12 @@ const numOfBuyers = 4;
         },
         informSuccess: async (status) => {
             console.log(`Contestant ${i} saw status: ${status}`);
-            // const leaderboard = await ctc.getViews().Leaderboard.leaderboard();
-            // if (leaderboard[0] === 'Some') {
-            //     leaderboard[1].forEach((element, i) => {
-            //         console.log(`${i}: ${element.accountAddress} ${element.returnValue} ${element.inputValue} ${element.timestamp}`);
-            //     });
-            // }
-            // else {
-            //     console.log(`undefined leaderboard`);
-            // }
-        },
-        informSubmission: (address, inputValue, evaluatedValue) => {
-            console.log(`Funder saw submission of ${inputValue} evaluated to ${evaluatedValue} by ${address}`);
-        },
-        ping: (x) => {
-            console.log(`PING ${JSON.stringify(x)}`);
+            isSubmissionPolled
         }
-        // shouldSubmitValue: () => {
-        //     return Math.random() < 0.1;
-        // }
     })
 
+    // define a dummy logging function as Monitor doesn't
+    // serve any purpose in console environment
     const Monitor = (i) => ({
         seeSubmission: (addr, input, output) => {
             console.log(`Monitor ${i} saw ${addr}, ${input}, ${output}`)
@@ -129,32 +85,17 @@ const numOfBuyers = 4;
         ),
         accContestantArray.map((accContestant, i) => {
             const ctcContestant = accContestant.attach(backend, ctcInfo);
-            // const Who = `Contestant #${i}`;
             return backend.Contestant(ctcContestant, Contestant(i, ctcContestant));
         }),
         backend.Monitor(
             ctcMonitor,
             Monitor(1)
         )
-        // backend.LeaderboardView(
-        //     ctcFunder,
-        //     {
-        //         informSubmission: (address, inputValue, evaluatedValue) => {
-        //             console.log(`Funder saw submission of ${inputValue} evaluated to ${evaluatedValue} by ${address}`);
-        //         }
-        //     }
-        // )
     ]);
 
+    // check final balances of Contestants
     for (let i = 0; i < accContestantArray.length; i++) {
         const afterBalance = await getBalance(accContestantArray[i]);
         console.log(`Contestant ${i} went to ${afterBalance}.`);
     }
-
-    // const afterIsolte = await getBalance(accIsolte);
-    // const afterRudeus = await getBalance(accRudeus);
-
-    // console.log(`Isolte went to ${afterIsolte}.`);
-    // console.log(`Rudeus went to ${afterRudeus}.`);
-
 })();
