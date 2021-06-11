@@ -8,7 +8,7 @@ const UserEntryType = Object({
     inputValue: UInt,
 });
 
-const LEADERBOARD_SIZE = 3;
+// const LEADERBOARD_SIZE = 3;
 
 const CommonInterface =
 {
@@ -25,9 +25,14 @@ const FunderInterface =
     postWager: Fun([], Null)
 }
 
-const LeaderboardViewInterface =
+// const LeaderboardViewInterface =
+// {
+//     leaderboard: Array(UserEntryType, LEADERBOARD_SIZE)
+// }
+
+const MonitorInterface =
 {
-    leaderboard: Array(UserEntryType, LEADERBOARD_SIZE)
+    seeSubmission: Fun([Address, UInt, UInt], Null)
 }
 
 const ContestantInterface =
@@ -41,8 +46,8 @@ const ContestantInterface =
 export const main =
     Reach.App(
         {},
-        [Participant('Funder', FunderInterface), ParticipantClass('Contestant', ContestantInterface), View('Leaderboard', LeaderboardViewInterface)],
-        (Funder, Contestant, LeaderboardView) => {
+        [Participant('Funder', FunderInterface), ParticipantClass('Contestant', ContestantInterface), ParticipantClass('Monitor', MonitorInterface)],
+        (Funder, Contestant, Monitor) => {
 
             Funder.only(() => {
                 const { amt, deadline } = declassify(interact.getBounty());
@@ -58,15 +63,15 @@ export const main =
                 interact.informBounty(amt, deadline);
             });
 
-            const initLeaderboard = Array.replicate(LEADERBOARD_SIZE, {
-                accountAddress: Funder,
-                returnValue: 0,
-                inputValue: 0,
-            });
-            LeaderboardView.leaderboard.set(initLeaderboard);
+            // const initLeaderboard = Array.replicate(LEADERBOARD_SIZE, {
+            //     accountAddress: Funder,
+            //     returnValue: 0,
+            //     inputValue: 0,
+            // });
+            // LeaderboardView.leaderboard.set(initLeaderboard);
 
-            const [keepGoing, currentWinner, leaderboard] =
-                parallelReduce([true, { accountAddress: Funder, returnValue: 0, inputValue: 0}, initLeaderboard])
+            const [keepGoing, currentWinner] =
+                parallelReduce([true, { accountAddress: Funder, returnValue: 0, inputValue: 0}])
                     .invariant(balance() == amt)
                     .while(keepGoing)
                     .case(
@@ -82,44 +87,45 @@ export const main =
                             const currentContestant = this;
                             const inputValue = fromSome(msg, 0);
                             const evaluatedValue = bountyFunction(inputValue);
+                            Monitor.only(() => interact.seeSubmission(this, inputValue, evaluatedValue))
                             const newEntry = {
                                 accountAddress: currentContestant,
                                 inputValue: inputValue,
                                 returnValue: evaluatedValue,
                             };
 
-                            const [isChanged, _, newLeaderboard] = leaderboard.reduce([false, 0, leaderboard], ([found, idx, newArr], elem) => {
-                                if (found) {
-                                    if (idx + 1 < newArr.length) {
-                                        return [found, idx + 1, newArr.set(idx + 1, elem)];
-                                    } else {
-                                        return [found, idx, newArr];
-                                    }
-                                } else {
-                                    if (elem.returnValue < newEntry.returnValue) {
-                                        if (idx + 1 < newArr.length) {
-                                            return [true, idx + 1, newArr.set(idx, newEntry)];
-                                        } else {
-                                            return [true, idx, newArr];
-                                        }
-                                    } else {
-                                        return [false, idx + 1, newArr];
-                                    }
-                                }
-                            })
-                            if (isChanged) {
-                                LeaderboardView.leaderboard.set(newLeaderboard);
-                                commit();
-                                Contestant.publish();
-                            }
+                            // const [isChanged, _, newLeaderboard] = leaderboard.reduce([false, 0, leaderboard], ([found, idx, newArr], elem) => {
+                            //     if (found) {
+                            //         if (idx + 1 < newArr.length) {
+                            //             return [found, idx + 1, newArr.set(idx + 1, elem)];
+                            //         } else {
+                            //             return [found, idx, newArr];
+                            //         }
+                            //     } else {
+                            //         if (elem.returnValue < newEntry.returnValue) {
+                            //             if (idx + 1 < newArr.length) {
+                            //                 return [true, idx + 1, newArr.set(idx, newEntry)];
+                            //             } else {
+                            //                 return [true, idx, newArr];
+                            //             }
+                            //         } else {
+                            //             return [false, idx + 1, newArr];
+                            //         }
+                            //     }
+                            // })
+                            // if (isChanged) {
+                            //     LeaderboardView.leaderboard.set(newLeaderboard);
+                            //     commit();
+                            //     Contestant.publish();
+                            // }
                             const newWinner = evaluatedValue > currentWinner.returnValue ? newEntry : currentWinner;
                             Contestant.only(() => interact.informSuccess(true))
-                            return [true, newWinner, newLeaderboard];
+                            return [true, newWinner];
                         })
                     )
                     .timeout(deadline, () => {
                         Anybody.publish();
-                        return [false, currentWinner, leaderboard];
+                        return [false, currentWinner];
                     });
 
             transfer(balance()).to(currentWinner.accountAddress);

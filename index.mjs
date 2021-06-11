@@ -16,9 +16,11 @@ const numOfBuyers = 4;
             stdlib.newTestAccount(startingBalance)
         )
     );
+    const accMonitor = await stdlib.newTestAccount(0);
 
     const ctcFunder = accFunder.deploy(backend);
     const ctcInfo = ctcFunder.getInfo();
+    const ctcMonitor = accMonitor.attach(backend, ctcInfo);
 
     const funderParams = {
         amt: stdlib.parseCurrency(20),
@@ -52,6 +54,9 @@ const numOfBuyers = 4;
 
         informSubmission: (address, inputValue, evaluatedValue) => {
             console.log(`Funder saw submission of ${inputValue} evaluated to ${evaluatedValue} by ${address}`);
+        },
+        postWager: () => {
+            console.log("Post Wager");
         }
         // bounty: (input) => {
         //     return input % 69;
@@ -90,15 +95,15 @@ const numOfBuyers = 4;
         },
         informSuccess: async (status) => {
             console.log(`Contestant ${i} saw status: ${status}`);
-            const leaderboard = await ctc.getViews().Leaderboard.leaderboard();
-            if (leaderboard[0] === 'Some') {
-                leaderboard[1].forEach((element, i) => {
-                    console.log(`${i}: ${element.accountAddress} ${element.returnValue} ${element.inputValue} ${element.timestamp}`);
-                });
-            }
-            else {
-                console.log(`undefined leaderboard`);
-            }
+            // const leaderboard = await ctc.getViews().Leaderboard.leaderboard();
+            // if (leaderboard[0] === 'Some') {
+            //     leaderboard[1].forEach((element, i) => {
+            //         console.log(`${i}: ${element.accountAddress} ${element.returnValue} ${element.inputValue} ${element.timestamp}`);
+            //     });
+            // }
+            // else {
+            //     console.log(`undefined leaderboard`);
+            // }
         },
         informSubmission: (address, inputValue, evaluatedValue) => {
             console.log(`Funder saw submission of ${inputValue} evaluated to ${evaluatedValue} by ${address}`);
@@ -111,6 +116,12 @@ const numOfBuyers = 4;
         // }
     })
 
+    const Monitor = (i) => ({
+        seeSubmission: (addr, input, output) => {
+            console.log(`Monitor ${i} saw ${addr}, ${input}, ${output}`)
+        }
+    })
+
     await Promise.all([
         backend.Funder(
             ctcFunder,
@@ -120,7 +131,11 @@ const numOfBuyers = 4;
             const ctcContestant = accContestant.attach(backend, ctcInfo);
             // const Who = `Contestant #${i}`;
             return backend.Contestant(ctcContestant, Contestant(i, ctcContestant));
-        })
+        }),
+        backend.Monitor(
+            ctcMonitor,
+            Monitor(1)
+        )
         // backend.LeaderboardView(
         //     ctcFunder,
         //     {
