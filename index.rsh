@@ -22,6 +22,7 @@ const FunderInterface =
         deadline: UInt,
         amt: UInt,
     })),
+    postWager: Fun([], Null)
 }
 
 const LeaderboardViewInterface =
@@ -50,6 +51,8 @@ export const main =
             //TODO: the deadline expression of a timeout clause can be any equation over consensus state. https://docs.reach.sh/guide-timeout.html 
             Funder.publish(amt, deadline)
                 .pay(amt);
+
+            Funder.only(() => interact.postWager());
 
             each([Contestant], () => {
                 interact.informBounty(amt, deadline);
