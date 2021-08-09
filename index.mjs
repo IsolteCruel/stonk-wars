@@ -52,7 +52,7 @@ const numOfBuyers = 4;
                 return ['Some', value];
             }
             else {
-                console.log(`Contestant ${i} o no`)
+                console.log(`Contestant ${i} did not submit`)
                 return ['None', null];
             }
         },
